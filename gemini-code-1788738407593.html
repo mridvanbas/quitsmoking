@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Özgürlük Yolu - Sigara Bırakma Takipçisi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .progress-bar-animated { transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+
+    <!-- Kurulum Ekranı -->
+    <div id="setup-view" class="max-w-lg mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg hidden">
+        <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">Yeni Bir Başlangıç 🚀</h1>
+        <form id="setup-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Sigarayı Bıraktığın Tarih ve Saat</label>
+                <input type="datetime-local" id="quit-date" required class="w-full p-2 border rounded-lg focus:ring focus:ring-blue-200">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Günde Kaç Tane İçiyordun?</label>
+                <input type="number" id="daily-smoked" min="1" required class="w-full p-2 border rounded-lg focus:ring focus:ring-blue-200" placeholder="Örn: 15">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Bir Pakette Kaç Sigara Var?</label>
+                <input type="number" id="pack-size" min="1" required class="w-full p-2 border rounded-lg focus:ring focus:ring-blue-200" value="20">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Bir Paketin Fiyatı (TL)</label>
+                <input type="number" id="pack-price" min="1" step="0.5" required class="w-full p-2 border rounded-lg focus:ring focus:ring-blue-200" placeholder="Örn: 60">
+            </div>
+            <hr class="my-4">
+            <h2 class="text-lg font-semibold text-gray-700">Bir Hedef Belirle (İsteğe Bağlı)</h2>
+            <div>
+                <label class="block text-sm font-medium mb-1">Hedefin Adı (Örn: Bisiklet, Tatil)</label>
+                <input type="text" id="goal-name" class="w-full p-2 border rounded-lg focus:ring focus:ring-blue-200" placeholder="Kendini ne ile ödüllendireceksin?">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Hedefin Fiyatı (TL)</label>
+                <input type="number" id="goal-price" min="1" class="w-full p-2 border rounded-lg focus:ring focus:ring-blue-200" placeholder="Örn: 5000">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Başla</button>
+        </form>
+    </div>
+
+    <!-- Ana Kontrol Paneli -->
+    <div id="dashboard-view" class="max-w-4xl mx-auto mt-6 p-4 hidden space-y-6">
+        
+        <!-- Başlık ve Sıfırlama -->
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">Tebrikler! 🎉</h1>
+            <button onclick="resetData()" class="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200">Sıfırla</button>
+        </div>
+
+        <!-- Sayaçlar ve Tasarruf -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white p-6 rounded-xl shadow-md text-center">
+                <p class="text-gray-500 text-sm uppercase tracking-wider mb-2">Bırakalı Geçen Süre</p>
+                <div id="time-elapsed" class="text-2xl font-bold text-blue-600">Yükleniyor...</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md text-center">
+                <p class="text-gray-500 text-sm uppercase tracking-wider mb-2">Toplam Tasarruf</p>
+                <div id="money-saved" class="text-4xl font-extrabold text-green-500">0.00 TL</div>
+            </div>
+        </div>
+
+        <!-- Bütçe Hedefi Kısmı -->
+        <div id="goal-container" class="bg-white p-6 rounded-xl shadow-md hidden">
+            <h2 class="text-xl font-bold mb-4 border-b pb-2">Hedefine Ulaşma Durumu</h2>
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+                <img id="goal-image" src="" alt="Hedef Görseli" class="w-full md:w-48 h-48 object-cover rounded-lg shadow-sm">
+                <div class="flex-1 w-full">
+                    <h3 id="goal-display-name" class="text-2xl font-semibold capitalize text-gray-800">Hedef</h3>
+                    <p class="text-gray-600 mt-1"><span id="goal-current-money" class="font-bold">0</span> TL / <span id="goal-target-money">0</span> TL</p>
+                    
+                    <!-- İlerleme Çubuğu -->
+                    <div class="w-full bg-gray-200 rounded-full h-4 mt-4 mb-2">
+                        <div id="goal-progress-bar" class="bg-gradient-to-r from-blue-400 to-blue-600 h-4 rounded-full progress-bar-animated" style="width: 0%"></div>
+                    </div>
+                    
+                    <p class="text-sm font-medium text-gray-700" id="goal-percentage">%0 Tamamlandı</p>
+                    <p class="text-sm text-gray-500 mt-2" id="goal-time-left">Tahmini kalan süre hesaplanıyor...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağlık İlerlemesi -->
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-xl font-bold mb-4 border-b pb-2">Vücudundaki Değişiklikler</h2>
+            <div id="health-milestones" class="space-y-4">
+                <!-- Javascript ile doldurulacak -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Sağlık Kilometre Taşları (Saniye cinsinden süreler) ---
+        const healthMilestones = [
+            { id: 1, title: "Nabız ve tansiyon normale döner", seconds: 20 * 60 },
+            { id: 2, title: "Kandaki oksijen seviyesi normale döner", seconds: 8 * 60 * 60 },
+            { id: 3, title: "Tat ve koku alma duyuları keskinleşir", seconds: 48 * 60 * 60 },
+            { id: 4, title: "Nefes almak kolaylaşır, enerji artar", seconds: 72 * 60 * 60 },
+            { id: 5, title: "Kan dolaşımı iyileşir", seconds: 14 * 24 * 60 * 60 },
+            { id: 6, title: "Akciğer fonksiyonları %30 artar", seconds: 30 * 24 * 60 * 60 },
+            { id: 7, title: "Kalp krizi riski yarıya iner", seconds: 365 * 24 * 60 * 60 }
+        ];
+
+        let appData = {};
+        let intervalId = null;
+
+        // Sayfa yüklendiğinde çalışacaklar
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedData = localStorage.getItem('smokeQuitData');
+            if (savedData) {
+                appData = JSON.parse(savedData);
+                initDashboard();
+            } else {
+                document.getElementById('setup-view').classList.remove('hidden');
+            }
+        });
+
+        // Form Gönderimi
+        document.getElementById('setup-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            appData = {
+                quitDate: new Date(document.getElementById('quit-date').value).getTime(),
+                dailySmoked: parseFloat(document.getElementById('daily-smoked').value),
+                packSize: parseFloat(document.getElementById('pack-size').value),
+                packPrice: parseFloat(document.getElementById('pack-price').value),
+                goalName: document.getElementById('goal-name').value.trim(),
+                goalPrice: parseFloat(document.getElementById('goal-price').value) || 0
+            };
+
+            // Maliyet hesaplamaları
+            appData.costPerCigarette = appData.packPrice / appData.packSize;
+            appData.costPerDay = appData.costPerCigarette * appData.dailySmoked;
+            appData.costPerSecond = appData.costPerDay / (24 * 60 * 60);
+
+            localStorage.setItem('smokeQuitData', JSON.stringify(appData));
+            
+            document.getElementById('setup-view').classList.add('hidden');
+            initDashboard();
+        });
+
+        function initDashboard() {
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            buildHealthDOM();
+            
+            if (appData.goalName && appData.goalPrice > 0) {
+                document.getElementById('goal-container').classList.remove('hidden');
+                document.getElementById('goal-display-name').innerText = appData.goalName;
+                document.getElementById('goal-target-money').innerText = formatMoney(appData.goalPrice);
+                
+                // İngilizce anahtar kelime için basit bir API (görsel için loremflickr kullanımı)
+                // Daha isabetli sonuçlar için kelimeyi İngilizce'ye çevirmek iyi olur ancak doğrudan da çalışır.
+                const safeGoalName = encodeURIComponent(appData.goalName);
+                document.getElementById('goal-image').src = `https://loremflickr.com/640/360/${safeGoalName}`;
+            }
+
+            // Döngüyü başlat (Saniyede bir güncelle)
+            if (intervalId) clearInterval(intervalId);
+            updateDashboard();
+            intervalId = setInterval(updateDashboard, 1000);
+        }
+
+        function updateDashboard() {
+            const now = new Date().getTime();
+            let elapsedSeconds = (now - appData.quitDate) / 1000;
+            
+            // Gelecek bir tarih seçildiyse sıfırla
+            if (elapsedSeconds < 0) elapsedSeconds = 0;
+
+            // 1. Süre Güncellemesi
+            const days = Math.floor(elapsedSeconds / (3600 * 24));
+            const hours = Math.floor((elapsedSeconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+            const seconds = Math.floor(elapsedSeconds % 60);
+            
+            document.getElementById('time-elapsed').innerHTML = 
+                `<span class="text-4xl">${days}</span> <span class="text-sm text-gray-500">Gün</span> 
+                 <span class="text-4xl">${hours}</span> <span class="text-sm text-gray-500">Saat</span> 
+                 <span class="text-4xl">${minutes}</span> <span class="text-sm text-gray-500">Dk</span>`;
+
+            // 2. Tasarruf Güncellemesi
+            const moneySaved = elapsedSeconds * appData.costPerSecond;
+            document.getElementById('money-saved').innerText = formatMoney(moneySaved) + " TL";
+
+            // 3. Hedef Güncellemesi
+            if (appData.goalPrice > 0) {
+                let percent = (moneySaved / appData.goalPrice) * 100;
+                if (percent > 100) percent = 100;
+                
+                document.getElementById('goal-current-money').innerText = formatMoney(moneySaved);
+                document.getElementById('goal-progress-bar').style.width = percent + "%";
+                document.getElementById('goal-percentage').innerText = `%${percent.toFixed(2)} Tamamlandı`;
+
+                if (percent < 100) {
+                    const remainingMoney = appData.goalPrice - moneySaved;
+                    const remainingSeconds = remainingMoney / appData.costPerSecond;
+                    const remDays = Math.floor(remainingSeconds / (3600 * 24));
+                    const remHours = Math.floor((remainingSeconds % (3600 * 24)) / 3600);
+                    document.getElementById('goal-time-left').innerText = `Hedefe ulaşmaya yaklaşık ${remDays} gün, ${remHours} saat kaldı.`;
+                } else {
+                    document.getElementById('goal-time-left').innerHTML = `<span class="text-green-600 font-bold">Hedefine ulaştın! Tebrikler!</span>`;
+                }
+            }
+
+            // 4. Sağlık Durumu Güncellemesi
+            healthMilestones.forEach(milestone => {
+                let percent = (elapsedSeconds / milestone.seconds) * 100;
+                if (percent > 100) percent = 100;
+                
+                const bar = document.getElementById(`health-bar-${milestone.id}`);
+                const text = document.getElementById(`health-text-${milestone.id}`);
+                
+                if(bar && text) {
+                    bar.style.width = percent + "%";
+                    text.innerText = `%${percent.toFixed(1)}`;
+                    
+                    if (percent === 100) {
+                        bar.classList.remove('bg-blue-500');
+                        bar.classList.add('bg-green-500');
+                    }
+                }
+            });
+        }
+
+        // Sağlık paneli HTML öğelerini oluşturur
+        function buildHealthDOM() {
+            const container = document.getElementById('health-milestones');
+            container.innerHTML = '';
+            
+            healthMilestones.forEach(m => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium text-gray-700">${m.title}</span>
+                        <span class="text-sm font-bold text-blue-600" id="health-text-${m.id}">%0</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="health-bar-${m.id}" class="bg-blue-500 h-2.5 rounded-full progress-bar-animated" style="width: 0%"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Para formatlayıcı (Örn: 1,234.56)
+        function formatMoney(amount) {
+            return amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Sistemi sıfırlama
+        function resetData() {
+            if (confirm("Tüm verilerini sıfırlamak ve baştan başlamak istediğine emin misin?")) {
+                localStorage.removeItem('smokeQuitData');
+                clearInterval(intervalId);
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
