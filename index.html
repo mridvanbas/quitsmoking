@@ -66,7 +66,7 @@
                 <div class="absolute -right-4 -top-4 text-6xl opacity-10">🚫</div>
                 <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">İçilmeyen Sigara</p>
                 <div class="flex items-baseline justify-center gap-1">
-                    <div id="cigarettes-avoided" class="text-4xl md:text-5xl font-extrabold text-gray-800 drop-shadow-sm">0</div>
+                    <div id="cigarettes-avoided" class="text-3xl md:text-4xl font-extrabold text-gray-800 drop-shadow-sm">0</div>
                     <span class="text-gray-500 font-medium text-sm">Adet</span>
                 </div>
             </div>
@@ -74,7 +74,7 @@
             <div class="bg-white p-5 rounded-xl shadow-md text-center flex flex-col justify-center relative overflow-hidden">
                 <div class="absolute -right-4 -top-4 text-6xl opacity-10">💰</div>
                 <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Toplam Tasarruf</p>
-                <div id="money-saved" class="text-4xl md:text-5xl font-extrabold text-green-500 drop-shadow-sm">0 TL</div>
+                <div id="money-saved" class="text-3xl md:text-4xl font-extrabold text-green-500 drop-shadow-sm">0.00 TL</div>
             </div>
         </div>
 
@@ -139,7 +139,6 @@
             <h2 class="text-xl font-bold mb-2 text-gray-800">Hedefin İçin Görsel Seç</h2>
             <p class="text-sm text-gray-500 mb-4">Otomatik görselleri seçebilir veya kendi görsel linkini yapıştırabilirsin.</p>
             
-            <!-- Özel Link Yapıştırma Alanı -->
             <div class="mb-4 flex gap-2">
                 <input type="url" id="custom-image-url-input" placeholder="Özel resim linkini buraya yapıştır (https://...)" class="flex-1 p-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none">
                 <button type="button" onclick="applyCustomImage()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-900 transition">Uygula</button>
@@ -156,7 +155,6 @@
     </div>
 
     <script>
-        // --- Sağlık Kilometre Taşları (Yakın vadeliler eklendi ve düzenlendi) ---
         const healthMilestones = [
             { id: 1, title: "Nabız ve tansiyon normale döner", desc: "Sadece 20 dakika içinde kalp atış hızın ve kan basıncın normal seviyelere düşer.", seconds: 20 * 60 },
             { id: 2, title: "Kandaki oksijen seviyesi normale döner", desc: "Zehirli karbonmonoksit gazı vücuttan atılmaya başlar, kanın daha iyi oksijen taşır.", seconds: 8 * 60 * 60 },
@@ -173,7 +171,6 @@
         let intervalId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Sihirli Link Senkronizasyon Kontrolü
             const urlParams = new URLSearchParams(window.location.search);
             const syncData = urlParams.get('sync');
             
@@ -181,7 +178,6 @@
                 try {
                     const decodedData = JSON.parse(decodeURIComponent(atob(syncData)));
                     localStorage.setItem('smokeQuitData', JSON.stringify(decodedData));
-                    // Linki temizle
                     window.history.replaceState({}, document.title, window.location.pathname);
                     alert("Veriler başarıyla eşitlendi!");
                 } catch (e) {
@@ -198,20 +194,17 @@
             }
         });
 
-        // Sihirli Link Oluşturma (Cihazlar arası eşitleme için)
         function generateSyncLink() {
             try {
                 const encodedData = btoa(encodeURIComponent(JSON.stringify(appData)));
                 const syncUrl = window.location.origin + window.location.pathname + '?sync=' + encodedData;
-                
-                // Panoya kopyala
                 navigator.clipboard.writeText(syncUrl).then(() => {
-                    alert("✅ Senkronizasyon linki kopyalandı!\n\nBu linki e-posta veya WhatsApp üzerinden telefonuna gönder. Telefonda linke tıkladığında tüm verilerin oraya aktarılacak.");
-                }).catch(err => {
-                    alert("Link kopyalanamadı. Lütfen linki manuel kopyala:\n" + syncUrl);
+                    alert("✅ Senkronizasyon linki kopyalandı!\n\nBu linki telefonuna göndererek verilerini eşitleyebilirsin.");
+                }).catch(() => {
+                    alert("Link kopyalanamadı: " + syncUrl);
                 });
             } catch(e) {
-                alert("Link oluşturulurken bir hata oluştu.");
+                alert("Link oluşturulurken hata oluştu.");
             }
         }
 
@@ -262,7 +255,8 @@
 
             if (intervalId) clearInterval(intervalId);
             updateDashboard();
-            intervalId = setInterval(updateDashboard, 1000);
+            // Her 100 milisaniyede bir (saniyenin onda biri) tıkır tıkır akması için güncelleniyor
+            intervalId = setInterval(updateDashboard, 100);
         }
 
         function setupGoalUI() {
@@ -291,19 +285,19 @@
             const minutes = Math.floor((elapsedSeconds % 3600) / 60);
             
             document.getElementById('time-elapsed').innerHTML = 
-                `<div class="flex flex-col items-center"><span class="text-3xl md:text-4xl">${days}</span><span class="text-xs text-gray-500">Gün</span></div> 
-                 <div class="text-xl text-gray-300 pb-4">:</div>
-                 <div class="flex flex-col items-center"><span class="text-3xl md:text-4xl">${hours}</span><span class="text-xs text-gray-500">Saat</span></div> 
-                 <div class="text-xl text-gray-300 pb-4">:</div>
-                 <div class="flex flex-col items-center"><span class="text-3xl md:text-4xl">${minutes}</span><span class="text-xs text-gray-500">Dk</span></div>`;
+                `<div class="flex flex-col items-center"><span class="text-2xl md:text-3xl">${days}</span><span class="text-xs text-gray-500">Gün</span></div> 
+                 <div class="text-xl text-gray-300 pb-3">:</div>
+                 <div class="flex flex-col items-center"><span class="text-2xl md:text-3xl">${hours}</span><span class="text-xs text-gray-500">Saat</span></div> 
+                 <div class="text-xl text-gray-300 pb-3">:</div>
+                 <div class="flex flex-col items-center"><span class="text-2xl md:text-3xl">${minutes}</span><span class="text-xs text-gray-500">Dk</span></div>`;
 
-            // 2. Tasarruf
+            // 2. Tasarruf (Milisaniyelik hassasiyetle tıkır tıkır artış)
             const moneySaved = elapsedSeconds * appData.costPerSecond;
-            document.getElementById('money-saved').innerText = Math.floor(moneySaved) + " TL";
+            document.getElementById('money-saved').innerText = formatMoney(moneySaved) + " TL";
 
-            // 3. İçilmeyen Sigara (Günlük içilen adet / 86400 saniye üzerinden anlık hesap)
+            // 3. İçilmeyen Sigara (Ondalıklı akış)
             const avoidedCount = elapsedSeconds * (appData.dailySmoked / 86400);
-            document.getElementById('cigarettes-avoided').innerText = Math.floor(avoidedCount);
+            document.getElementById('cigarettes-avoided').innerText = avoidedCount.toFixed(1);
 
             // Hedef Durumu
             if (appData.goalPrice > 0) {
@@ -312,7 +306,7 @@
                 
                 document.getElementById('goal-current-money').innerText = formatMoney(moneySaved);
                 document.getElementById('goal-progress-bar').style.width = percent + "%";
-                document.getElementById('goal-progress-bar').innerText = percent > 5 ? `%${Math.floor(percent)}` : '';
+                document.getElementById('goal-progress-bar').innerText = percent > 5 ? `%${percent.toFixed(1)}` : '';
                 document.getElementById('goal-percentage').innerText = `%${percent.toFixed(2)} Tamamlandı`;
 
                 const tlContainer = document.getElementById('goal-time-left');
@@ -342,7 +336,7 @@
                 
                 if(bar && text && dateInfo) {
                     bar.style.width = percent + "%";
-                    text.innerText = `%${Math.floor(percent)}`;
+                    text.innerText = `%${percent.toFixed(1)}`;
                     
                     const targetDate = new Date(appData.quitDate + (m.seconds * 1000));
                     const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' };
@@ -358,7 +352,7 @@
                         const d = Math.floor(remSecs / (3600 * 24));
                         const h = Math.floor((remSecs % (3600 * 24)) / 3600);
                         let remStr = d > 0 ? `${d} gün ` : "";
-                        remStr += h > 0 ? `${h} saat kaldı` : (d === 0 ? "Çok yaklaştın!" : "kaldı");
+                        remStr += h > 0 ? `${h} saat kaldı` : "Çok yaklaştın!";
 
                         dateInfo.innerHTML = `📅 <b>Hedef:</b> ${dateStr} <span class="text-blue-500 font-medium ml-1">(${remStr})</span>`;
                     }
@@ -391,6 +385,7 @@
         }
 
         function formatMoney(amount) { return amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        
         function openGoalModal() {
             document.getElementById('edit-goal-name').value = appData.goalName || '';
             document.getElementById('edit-goal-price').value = appData.goalPrice > 0 ? appData.goalPrice : '';
@@ -400,7 +395,7 @@
         function openImageModal() {
             if(!appData.goalName) return alert("Önce bir hedef adı belirlemelisin!");
             document.getElementById('modal-image').classList.remove('hidden');
-            document.getElementById('custom-image-url-input').value = ""; // Alanı temizle
+            document.getElementById('custom-image-url-input').value = "";
             
             const grid = document.getElementById('image-grid');
             grid.innerHTML = '<div class="col-span-full text-center py-6 text-gray-500 text-sm">Görseller yükleniyor...</div>';
@@ -422,7 +417,7 @@
             if(inputUrl && inputUrl.startsWith('http')) {
                 selectImage(inputUrl);
             } else {
-                alert("Lütfen geçerli bir resim linki girin (http veya https ile başlayan).");
+                alert("Lütfen geçerli bir resim linki girin.");
             }
         }
 
@@ -442,7 +437,7 @@
             if (confirm("Tüm başarılarını sıfırlamak istediğine emin misin?")) {
                 localStorage.removeItem('smokeQuitData');
                 clearInterval(intervalId);
-                window.location.href = window.location.pathname; // Parametreleri de temizler
+                window.location.href = window.location.pathname;
             }
         }
     </script>
